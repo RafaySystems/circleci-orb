@@ -12,14 +12,14 @@ commands:
   init:
     description: Initializes Rafay CLI.
     parameters:
-      rafay_api_key:
+      rctl_api_key:
         description: Env variable storing your API key
         type: env_var_name
-        default: RAFAY_API_KEY
-      rafay_secret_key:
+        default: RCTL_API_KEY
+      rctl_secret_key:
         description: Env variable storing your API Secret
         type: env_var_name
-        default: RAFAY_API_SECRET
+        default: RCTL_API_SECRET
       rafay_username:
         description: Env variable storing your Username
         type: env_var_name
@@ -28,10 +28,14 @@ commands:
         description: Env Variable storing your Rafay Registry
         type: env_var_name
         default: RAFAY_REGISTRY_ENDPOINT
-      rafay_rest_endpoint:
+      rctl_rest_endpoint:
         description: Env Variable storing your Rafay Rest Endpoint
         type: env_var_name
-        default: RAFAY_REST_ENDPOINT
+        default: RCTL_REST_ENDPOINT
+      rctl_ops_endpoint:
+        description: Env Variable storing your Rafay Ops Endpoint
+        type: env_var_name
+        default: RCTL_OPS_ENDPOINT
       rafay_registry_secret:
         description: Env Variable storing your Rafay Registry Secret
         type: env_var_name
@@ -47,18 +51,10 @@ commands:
     steps:
       - run:
          command: |
-           wget -O ${HOME}/rafay-cli-linux-amd64.tar.bz https://s3-us-west-2.amazonaws.com/rafay-prod-cli/publish/rafay-cli-linux-amd64.tar.bz2
-           tar -C ${HOME} -xf ${HOME}/rafay-cli-linux-amd64.tar.bz
-           chmod 0755 ${HOME}/rafay-cli
+           wget -O ${HOME}/rctl-linux-amd64.tar.bz2 https://s3-us-west-2.amazonaws.com/rafay-prod-cli/publish/rctl-linux-amd64.tar.bz2
+           tar -C ${HOME} -xf ${HOME}/rctl-linux-amd64.tar.bz2
+           chmod 0755 ${HOME}/rctl
            mkdir -p ${HOME}/.rafay/cli
-           echo "RAFAY_CLI_LOG_FILE_LOCATION=${<< parameters.rafay_cli_log >>}" > ${HOME}/.rafay/cli/config
-           echo "RAFAY_REGISTRY_ENDPOINT=${<< parameters.rafay_registry >>}" >> ${HOME}/.rafay/cli/config
-           echo "RAFAY_REST_ENDPOINT=${<< parameters.rafay_rest_endpoint >>}" >> ${HOME}/.rafay/cli/config
-           echo "RAFAY_API_KEY=${<< parameters.rafay_api_key >>}" >> ${HOME}/.rafay/cli/config
-           echo "RAFAY_API_SECRET=${<< parameters.rafay_secret_key >>}" >> ${HOME}/.rafay/cli/config
-           echo "RAFAY_USERNAME=${<< parameters.rafay_username >>}" >> ${HOME}/.rafay/cli/config
-           echo "RAFAY_REGISTRY_SECRET=${<< parameters.rafay_registry_secret >>}" >> ${HOME}/.rafay/cli/config
-           echo "RAFAY_ORGANIZATION_LABEL=${<< parameters.rafay_organization_label >>}" >> ${HOME}/.rafay/cli/config
 
   add_workload:
     description: Adds a workload to Rafay Platform.
@@ -68,7 +64,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rafay-cli workload create <<parameters.yaml_file>>
+         ${HOME}/rctl workload create <<parameters.yaml_file>>
 
   set_workload_image:
     description: Sets an image to a container in a workload
@@ -87,7 +83,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rafay-cli workload set-image <<parameters.workload>> <<parameters.container>> <<parameters.image>>:<<parameters.tag>>
+         ${HOME}/rctl workload set-image <<parameters.workload>> <<parameters.container>> <<parameters.image>>:<<parameters.tag>>
 
   update_workload:
     description: Updates an already created workload on Rafay Platform.
@@ -100,7 +96,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rafay-cli workload update <<parameters.workload>> <<parameters.yaml_file>>
+         ${HOME}/rctl workload update <<parameters.workload>> <<parameters.yaml_file>>
 
   publish_workload:
     description: Publish a workload on Rafay Platform.
@@ -110,7 +106,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rafay-cli workload publish <<parameters.workload>>
+         ${HOME}/rctl workload publish <<parameters.workload>>
 
   delete_workload:
     description: Deletes a workload on Rafay Platform.
@@ -120,7 +116,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rafay-cli workload delete <<parameters.workload>>
+         ${HOME}/rctl workload delete <<parameters.workload>>
 
   check_workload_status:
     description: Check the publish status of a workload on Rafay Platform.
@@ -131,20 +127,25 @@ commands:
     steps:
       - run:
          command: |
-           workload_status="WorkloadNotPublished"
+           workload_status="Not Ready"
            workload_status_iterations=1
-           workload_version=`${HOME}/rafay-cli workload status <<parameters.workload>> -t|jq .[0].version`
-           while [ "$workload_status" != "WorkloadPublished" ];
+           while [ "$workload_status" != "Ready" ];
            do
-                workload_status=`${HOME}/rafay-cli workload status <<parameters.workload>> -p $workload_version |jq .publish_status|cut -d'"' -f2`
-                echo $workload_status
-                sleep 10
-                if [ $workload_status_iterations -ge 30 ];
-                then
-                    break
-                fi
-                workload_status_iterations=$((workload_status_iterations+1))
+              workload_status=`${HOME}/rctl workload status <<parameters.workload>> -o json|jq .result[].status|tr -d '"'`
+              echo $workload_status
+              sleep 30
+              if [ $workload_status_iterations -ge 30 ];
+              then
+                  break
+              fi
+              if [ "$workload_status" = "Failed" ];
+              then
+                  echo "Workload Deployment Failed"
+                  break
+              fi
+              workload_status_iterations=$((workload_status_iterations+1))
            done
+
 executors:
   default:
     description: |
@@ -174,7 +175,7 @@ examples:
               - rafay/set_workload_image:
                     workload: demo-circleci
                     container: httpbin
-                    image: $RAFAY_ORGANIZATION_LABEL/httpbin
+                    image: $RAFAY_REGISTRY_ENDPOINT/$RAFAY_ORGANIZATION_LABEL/httpbin
                     tag: $CIRCLE_SHA1
               - rafay/publish_workload:
                     workload: demo-circleci
