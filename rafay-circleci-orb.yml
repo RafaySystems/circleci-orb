@@ -88,15 +88,12 @@ commands:
   update_workload:
     description: Updates an already created workload on Rafay Platform.
     parameters:
-      workload:
-        description: Name of the workload
-        type: string
       yaml_file:
         description: Yaml file consisting of the workload config
         type: string
     steps:
       - run:
-         ${HOME}/rctl workload update <<parameters.workload>> <<parameters.yaml_file>>
+         ${HOME}/rctl workload update <<parameters.yaml_file>>
 
   publish_workload:
     description: Publish a workload on Rafay Platform.
