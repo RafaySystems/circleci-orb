@@ -20,6 +20,14 @@ commands:
         description: Env variable storing your API Secret
         type: env_var_name
         default: RCTL_API_SECRET
+      rctl_rest_endpoint:
+        description: Env Variable storing your Rafay Rest Endpoint
+        type: env_var_name
+        default: RCTL_REST_ENDPOINT
+      rctl_project:
+        description: Env Variable storing your Rafay Project
+        type: env_var_name
+        default: RCTL_PROJECT
       rafay_username:
         description: Env variable storing your Username
         type: env_var_name
@@ -28,10 +36,6 @@ commands:
         description: Env Variable storing your Rafay Registry
         type: env_var_name
         default: RAFAY_REGISTRY_ENDPOINT
-      rctl_rest_endpoint:
-        description: Env Variable storing your Rafay Rest Endpoint
-        type: env_var_name
-        default: RCTL_REST_ENDPOINT
       rctl_ops_endpoint:
         description: Env Variable storing your Rafay Ops Endpoint
         type: env_var_name
