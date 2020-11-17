@@ -68,7 +68,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rctl workload create <<parameters.yaml_file>>
+         ${HOME}/rctl create workload <<parameters.yaml_file>>
 
   set_workload_image:
     description: Sets an image to a container in a workload
@@ -97,7 +97,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rctl workload update <<parameters.yaml_file>>
+         ${HOME}/rctl update workload <<parameters.yaml_file>>
 
   publish_workload:
     description: Publish a workload on Rafay Platform.
@@ -107,7 +107,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rctl workload publish <<parameters.workload>>
+         ${HOME}/rctl publish workload <<parameters.workload>>
 
   delete_workload:
     description: Deletes a workload on Rafay Platform.
@@ -117,7 +117,7 @@ commands:
         type: string
     steps:
       - run:
-         ${HOME}/rctl workload delete <<parameters.workload>>
+         ${HOME}/rctl delete workload <<parameters.workload>>
 
   check_workload_status:
     description: Check the publish status of a workload on Rafay Platform.
@@ -132,7 +132,7 @@ commands:
            workload_status_iterations=1
            while [ "$workload_status" != "Ready" ];
            do
-              workload_status=`${HOME}/rctl workload status <<parameters.workload>> -o json|jq .result[].status|tr -d '"'`
+              workload_status=`${HOME}/rctl status workload <<parameters.workload>> -o json|jq .result[].status|tr -d '"'`
               echo $workload_status
               sleep 30
               if [ $workload_status_iterations -ge 30 ];
