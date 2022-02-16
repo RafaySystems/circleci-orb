@@ -146,6 +146,34 @@ commands:
               fi
               workload_status_iterations=$((workload_status_iterations+1))
            done
+  configure_workload:
+    description: Configure the workload on Rafay Platform.
+    parameters:
+      yaml_file:
+        description: Yaml file consisting of the workload config
+        type: string
+      workload:
+        description: Name of the workload
+        type: string
+    steps:
+      - run:
+         command: |
+           LookupWorkload () {
+             local workload match="$1"
+             shift
+             for workload; do [[ "$workload" == "$match" ]] && echo "yes"; done
+             echo "no"
+           }
+           wl_tmp=`${HOME}/rctl get workload -o json | jq '.result[]|.name' |cut -d'"' -f2`
+           WL_TMP_ARRAY=( $wl_tmp )
+           wl_exist=$(LookupWorkload <<parameters.workload>> "${WL_TMP_ARRAY[@]}")
+           if [ "$wl_exist" == "no" ];
+           then
+             ${HOME}/rctl create workload <<parameters.yaml_file>>
+           else
+             ${HOME}/rctl update workload <<parameters.yaml_file>>
+           fi
+
 
 executors:
   default:
