@@ -164,7 +164,7 @@ commands:
              for workload; do [[ "$workload" == "$match" ]] && echo "yes"; done
              echo "no"
            }
-           wl_tmp=`${HOME}/rctl get workload -o json | jq '.result[]|.name' |cut -d'"' -f2`
+           wl_tmp=`${HOME}/rctl get workload -o json | jq 'select(.result | length > 0)|.result[]|.name' |cut -d'"' -f2`
            WL_TMP_ARRAY=( $wl_tmp )
            wl_exist=$(LookupWorkload <<parameters.workload>> "${WL_TMP_ARRAY[@]}")
            if [ "$wl_exist" == "no" ];
